@@ -107,14 +107,31 @@ docker-compose up --build
 
 ## Unraid Setup
 
-1. **Install from Docker Hub**: Use `alexxyk/homeocr` (if published)
-2. **Build from Source**: 
-   - Set Repository to: `https://github.com/AlexXYK/homeCR`
-   - Set Branch to: `main`
-   - Port mapping: `5000:5000`
-   - Optional volumes:
-     - `/mnt/user/appdata/surya-ocr/data:/app/data` (for file processing)
-     - `/mnt/user/appdata/surya-ocr/tmp:/tmp/ocr` (for temporary files)
+### Option 1: Docker Hub (Recommended - Fastest)
+Use pre-built images from Docker Hub:
+
+```
+Repository: alexxyk/surya-ocr:latest
+# or for development version:
+Repository: alexxyk/surya-ocr:dev
+```
+
+**Container Settings:**
+- Port mapping: `5000:5000`
+- Optional volumes:
+  - Container Path: `/app/data` → Host Path: `/mnt/user/appdata/surya-ocr/data`
+  - Container Path: `/tmp/ocr` → Host Path: `/mnt/user/appdata/surya-ocr/tmp`
+
+### Option 2: Build from Source (Advanced)
+If your Unraid supports building from Git repositories:
+
+- **Repository URL**: `https://github.com/AlexXYK/homeCR`
+- **Branch**: `main` (stable) or `dev` (latest features)
+- **Build Context**: `/`
+- **Dockerfile**: `Dockerfile`
+- Port mapping: `5000:5000`
+
+**Note**: Building from source takes longer but gives you the latest code changes immediately.
 
 ## Text Cleanup Tools
 
