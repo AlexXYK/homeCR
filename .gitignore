@@ -1,0 +1,77 @@
+# Python
+__pycache__/
+*.pyc
+env/
+venv/
+.env
+
+# model / cache / large files
+hf-cache/
+*.gguf
+*.pt
+*.pth
+*.onnx
+*.bin
+*.ckpt
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Docker build
+build/
+dist/
+
+# logs
+*.log
+
+  # Backup files
+  *.bak
+  *.bak.*
+  *~
+
+  # Python
+  __pycache__/
+  *.py[cod]
+  *.class
+  *.so
+  .Python
+  build/
+  develop-eggs/
+  dist/
+  downloads/
+  eggs/
+  .eggs/
+  lib/
+  lib64/
+  parts/
+  sdist/
+  var/
+  wheels/
+  *.egg-info/
+  .installed.cfg
+  *.egg
+
+  # Virtual environments
+  venv/
+  ENV/
+  env/
+  .venv/
+
+  # IDE
+  .vscode/
+  .idea/
+  *.swp
+  *.swo
+
+  # OS
+  .DS_Store
+  Thumbs.db
+
+  # HuggingFace cache (mounted separately)
+  hf-cache/
+
+  # Docker
+  .dockerignore
