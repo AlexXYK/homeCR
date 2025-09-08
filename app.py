@@ -255,3 +255,4 @@ async def ocr_text_md(
         model = md_model or DEFAULT_MD_MODEL
         md = await md_ollama(txt, model)
     return PlainTextResponse(md)
+

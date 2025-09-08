@@ -73,3 +73,4 @@ s = re.sub(
 
 p.write_text(s)
 print("Patched cleanup in app.py (unicode-aware)")
+

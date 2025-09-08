@@ -50,3 +50,4 @@ s = re.sub(r'DOT_LINE.*?def clean_text\([^\)]*\):.*?return s',
 
 p.write_text(s)
 print("Patched cleanup in app.py (ASCII-safe)")
+

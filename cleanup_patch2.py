@@ -60,3 +60,4 @@ s = re.sub(
 
 p.write_text(s)
 print("Patched cleanup in app.py (drop numbers & junk, keep X./Note)")
+

@@ -16,3 +16,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app.py /app/app.py
 EXPOSE 8214
 CMD ["sh","-lc","uvicorn app:app --host 0.0.0.0 --port ${API_PORT:-8214}"]
+
