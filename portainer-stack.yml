@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  api:
+    image: alexxyk/surya-ocr:latest
+    container_name: surya-ocr-api
+    ports:
+      - "5000:5000"
+    environment:
+      # === OLLAMA Configuration ===
+      - OLLAMA_HOST=http://192.168.0.153:11434
+      - OLLAMA_VISION_MODEL=qwen2.5vl:7b
+      - OLLAMA_TEXT_MODEL=gemma3:12b-it-qat
+      
+      # === Vision Provider ===
+      - VISION_PROVIDER=ollama
+      
+      # === API Keys (add your keys here) ===
+      - GEMINI_API_KEY=
+      - OPENAI_API_KEY=
+      - ANTHROPIC_API_KEY=
+      - OPENROUTER_API_KEY=
+      
+      # === Model Selection ===
+      - GEMINI_MODEL=gemini-2.0-flash-exp
+      - OPENAI_MODEL=gpt-4-vision-preview
+      - ANTHROPIC_MODEL=claude-3-5-sonnet-20241022
+      
+      # === OCR Behavior ===
+      - USE_HYBRID_OCR=true
+      - PERFECT_TABLES=false
+      
+      # === Ports & Logging ===
+      - API_PORT=5000
+      - LOG_LEVEL=INFO
+    
+    volumes:
+      - surya-ocr-data:/app/data
+      - surya-ocr-logs:/app/logs
+    
+    restart: unless-stopped
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    networks:
+      - surya-network
+
+  dashboard:
+    image: alexxyk/surya-ocr:latest
+    container_name: surya-ocr-dashboard
+    command: ["python", "run_dashboard.py"]
+    ports:
+      - "8080:8080"
+    environment:
+      - OLLAMA_HOST=http://192.168.0.153:11434
+      - VISION_PROVIDER=ollama
+      - GEMINI_API_KEY=
+      - DASHBOARD_PORT=8080
+    
+    volumes:
+      - surya-ocr-data:/app/data
+    
+    restart: unless-stopped
+    
+    depends_on:
+      - api
+    
+    networks:
+      - surya-network
+
+networks:
+  surya-network:
+    driver: bridge
+
+volumes:
+  surya-ocr-data:
+  surya-ocr-logs:
+
