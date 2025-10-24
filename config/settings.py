@@ -16,27 +16,19 @@ class Settings(BaseSettings):
         extra="ignore"
     )
     
-    # Ollama Configuration
-    ollama_host: str = "http://192.168.0.153:11434"
-    ollama_vision_model: str = "llava:13b"  # Multimodal model for vision tasks
-    ollama_text_model: str = "gemma3:12b-it-qat"  # Text-only model for formatting
-    ollama_formatter_model: str = "gemma3:12b-it-qat"  # Text-only model for formatting
-    ollama_max_parallel_requests: int = 2
+    # === Vision Provider Configuration ===
+    # Provider: ollama (local), gemini (Google), openai (GPT-4), anthropic (Claude), openrouter
+    vision_provider: str = "ollama"
+    vision_model: str = "qwen2.5vl:7b"  # Model to use for the selected provider
     
-    # Vision Provider Configuration
-    vision_provider: str = "ollama"  # Options: gemini, openai, anthropic, ollama, openrouter
-    
-    # Provider API Keys
+    # Provider API Keys (only needed for cloud providers)
     gemini_api_key: Optional[str] = None
     openai_api_key: Optional[str] = None
     anthropic_api_key: Optional[str] = None
     openrouter_api_key: Optional[str] = None
     
-    # Provider-Specific Models
-    gemini_model: str = "gemini-2.0-flash-exp"  # gemini-2.0-flash-exp, gemini-1.5-flash, gemini-1.5-pro
-    openai_model: str = "gpt-4-vision-preview"  # gpt-4-vision-preview, gpt-4-turbo
-    anthropic_model: str = "claude-3-5-sonnet-20241022"  # claude-3-5-sonnet, claude-3-opus
-    openrouter_model: str = "anthropic/claude-3.5-sonnet"  # Any OpenRouter model
+    # Ollama-specific (only if vision_provider=ollama)
+    ollama_host: str = "http://192.168.0.153:11434"
     
     # Default OCR Settings
     use_hybrid_ocr: bool = True  # Run both Tesseract + Surya in parallel

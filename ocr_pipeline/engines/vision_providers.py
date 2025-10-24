@@ -262,13 +262,14 @@ def get_vision_provider(provider: str = None, model: str = None) -> BaseVisionPr
     Factory function to get the appropriate vision provider.
     
     Args:
-        provider: Provider name (gemini, openai, anthropic, ollama, openrouter)
-        model: Model name for the provider
+        provider: Provider name (gemini, openai, anthropic, ollama, openrouter). None = use settings.
+        model: Model name for the provider. None = use settings.
     
     Returns:
         Initialized provider instance
     """
     provider = provider or settings.vision_provider
+    model = model or settings.vision_model
     
     providers = {
         "gemini": GeminiProvider,
@@ -281,18 +282,5 @@ def get_vision_provider(provider: str = None, model: str = None) -> BaseVisionPr
     if provider not in providers:
         raise ValueError(f"Unknown provider: {provider}. Available: {list(providers.keys())}")
     
-    provider_class = providers[provider]
-    
-    # Use provider-specific default model if not specified
-    if model is None:
-        model_defaults = {
-            "gemini": settings.gemini_model or "gemini-2.0-flash-exp",
-            "openai": settings.openai_model or "gpt-4-vision-preview",
-            "anthropic": settings.anthropic_model or "claude-3-5-sonnet-20241022",
-            "ollama": settings.ollama_vision_model or "llava:13b",
-            "openrouter": settings.openrouter_model or "anthropic/claude-3.5-sonnet"
-        }
-        model = model_defaults.get(provider)
-    
-    return provider_class(model_name=model)
+    return providers[provider](model_name=model)
 

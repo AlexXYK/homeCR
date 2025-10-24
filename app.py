@@ -1,8 +1,8 @@
 import io, os, re, threading
 from functools import lru_cache
 from typing import Tuple, Optional
-from fastapi import FastAPI, File, UploadFile, Query
-from fastapi.responses import PlainTextResponse, JSONResponse
+from fastapi import FastAPI, File, UploadFile, Query, Request
+from fastapi.responses import PlainTextResponse, JSONResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image, ImageOps
 import numpy as np
@@ -429,4 +429,50 @@ async def ocr_status():
             {"status": "error", "error": str(e)},
             status_code=500
         )
+
+
+# ============================================
+# Dashboard Routes (Web UI)
+# ============================================
+
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+
+# Setup dashboard templates and static files
+dashboard_dir = Path(__file__).parent / "dashboard"
+if dashboard_dir.exists():
+    from pathlib import Path
+    templates = Jinja2Templates(directory=str(dashboard_dir / "templates"))
+    app.mount("/static", StaticFiles(directory=str(dashboard_dir / "static")), name="static")
+
+    @app.get("/dashboard", response_class=HTMLResponse, tags=["Dashboard"])
+    async def dashboard_home(request: Request):
+        """Web dashboard homepage."""
+        return templates.TemplateResponse("index.html", {"request": request})
+
+    @app.get("/dashboard/config", response_class=HTMLResponse, tags=["Dashboard"])
+    async def config_page(request: Request):
+        """Configuration page."""
+        return templates.TemplateResponse("config.html", {"request": request})
+
+    @app.get("/dashboard/test", response_class=HTMLResponse, tags=["Dashboard"])
+    async def test_page(request: Request):
+        """Testing interface page."""
+        return templates.TemplateResponse("test.html", {"request": request})
+    
+    @app.get("/api/settings", tags=["Dashboard"])
+    async def get_settings():
+        """Get current system settings."""
+        return JSONResponse({
+            "vision_provider": settings.vision_provider,
+            "vision_model": settings.vision_model,
+            "ollama_host": settings.ollama_host,
+            "use_hybrid_ocr": settings.use_hybrid_ocr,
+            "perfect_tables": settings.perfect_tables,
+            "api_keys_configured": {
+                "gemini": bool(settings.gemini_api_key),
+                "openai": bool(settings.openai_api_key),
+                "anthropic": bool(settings.anthropic_api_key)
+            }
+        })
 
