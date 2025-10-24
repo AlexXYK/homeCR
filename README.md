@@ -114,6 +114,8 @@ Use pre-built images from Docker Hub:
 Repository: alexxyk/surya-ocr:latest
 # or for development version:
 Repository: alexxyk/surya-ocr:dev
+
+**Status**: ✅ Docker images building automatically! Check [Docker Hub](https://hub.docker.com/r/alexxyk/surya-ocr) for published images
 ```
 
 **Container Settings:**

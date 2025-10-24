@@ -1,14 +1,16 @@
-version: '3.8'
+ version: '3.8'
 
 services:
   surya-ocr:
-    build: .
+    image: alexxyk/surya-ocr:latest
     container_name: surya-ocr-api
     ports:
       - "5000:5000"
     environment:
-      - PORT=5000
+      - API_PORT=5000
       - PYTHONUNBUFFERED=1
+      - OLLAMA_HOST=http://192.168.0.153:11434
+      - DEFAULT_MD_MODEL=gemma3:27b
     volumes:
       # Mount for temporary OCR files and processing
       - ./tmp:/tmp/ocr
@@ -16,7 +18,7 @@ services:
       - ./data:/app/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      test: ["CMD", "curl", "-f", "http://localhost:5000/healthz"]
       interval: 30s
       timeout: 10s
       retries: 3
