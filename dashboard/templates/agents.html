@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Agents - Universal OCR{% endblock %}
+
+{% block content %}
+<h1>Agent Control Center</h1>
+
+<div class="card">
+    <h2>Agent System Status</h2>
+    <div class="alert alert-info">
+        <strong>Coming Soon:</strong> The AI agent system is under development. 
+        Once complete, you'll be able to monitor and control autonomous agents that improve the OCR system here.
+    </div>
+    
+    <div style="margin-top: 1.5rem;">
+        <span class="status status-warning">Agents Not Yet Initialized</span>
+    </div>
+</div>
+
+<div class="grid">
+    <div class="card">
+        <h2>Director Agent</h2>
+        <p style="color: var(--text-secondary);">Oversees all operations and coordinates other agents</p>
+        <span class="status status-warning">Not Started</span>
+    </div>
+    
+    <div class="card">
+        <h2>Testing Agent</h2>
+        <p style="color: var(--text-secondary);">Runs benchmarks and identifies issues</p>
+        <span class="status status-warning">Not Started</span>
+    </div>
+    
+    <div class="card">
+        <h2>Development Agent</h2>
+        <p style="color: var(--text-secondary);">Proposes and implements improvements</p>
+        <span class="status status-warning">Not Started</span>
+    </div>
+    
+    <div class="card">
+        <h2>Evaluation Agent</h2>
+        <p style="color: var(--text-secondary);">Analyzes results and suggests optimizations</p>
+        <span class="status status-warning">Not Started</span>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Actions</h2>
+    <div style="display: flex; gap: 1rem;">
+        <button class="btn btn-success" disabled>Start Agent System</button>
+        <button class="btn btn-danger" disabled>Stop All Agents</button>
+        <button class="btn btn-secondary" disabled>Inject Task</button>
+    </div>
+    <p style="margin-top: 1rem; color: var(--text-secondary);">
+        <em>Agent system will be available in the next development phase</em>
+    </p>
+</div>
+
+<div class="card">
+    <h2>Activity Log</h2>
+    <ul class="activity-feed">
+        <li class="activity-item">
+            <span class="activity-time">Waiting</span>
+            <p>No agent activity yet</p>
+        </li>
+    </ul>
+</div>
+{% endblock %}
+

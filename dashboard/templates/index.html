@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Universal OCR{% endblock %}
+
+{% block content %}
+<h1>Dashboard</h1>
+
+<div class="grid">
+    <div class="card">
+        <div class="stat">
+            <span class="stat-value" id="total-processed">0</span>
+            <span class="stat-label">Documents Processed</span>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="stat">
+            <span class="stat-value" id="avg-confidence">0%</span>
+            <span class="stat-label">Avg Confidence</span>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="stat">
+            <span class="stat-value" id="active-engines">0</span>
+            <span class="stat-label">Active Engines</span>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="stat">
+            <span class="stat-value" id="agent-status">⏸️</span>
+            <span class="stat-label">Agent Status</span>
+        </div>
+    </div>
+</div>
+
+<div class="grid" style="grid-template-columns: 2fr 1fr;">
+    <div class="card">
+        <h2>System Status</h2>
+        <div id="system-status">
+            <p style="color: var(--text-secondary);">Loading system status...</p>
+        </div>
+    </div>
+    
+    <div class="card">
+        <h2>Recent Activity</h2>
+        <ul class="activity-feed" id="activity-feed">
+            <li class="activity-item">
+                <span class="activity-time">Just now</span>
+                <p>System initialized</p>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Quick Actions</h2>
+    <div style="display: flex; gap: 1rem;">
+        <a href="/test" class="btn btn-primary">Test OCR</a>
+        <a href="/config" class="btn btn-secondary">Configure</a>
+        <a href="/agents" class="btn btn-success">View Agents</a>
+        <button class="btn btn-danger" onclick="refreshStatus()">Refresh Status</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+async function refreshStatus() {
+    try {
+        const response = await fetch('http://localhost:5000/ocr_status');
+        const data = await response.json();
+        
+        // Update system status
+        const statusDiv = document.getElementById('system-status');
+        let html = '<table><thead><tr><th>Engine</th><th>Status</th></tr></thead><tbody>';
+        
+        for (const [name, info] of Object.entries(data.engines)) {
+            if (name === 'ollama_models') continue;
+            const status = info.available ? 
+                '<span class="status status-success">Available</span>' : 
+                '<span class="status status-error">Unavailable</span>';
+            html += `<tr><td>${name}</td><td>${status}</td></tr>`;
+        }
+        
+        html += '</tbody></table>';
+        
+        // Add Ollama status
+        const ollamaStatus = data.ollama.status === 'connected' ?
+            '<span class="status status-success">Connected</span>' :
+            '<span class="status status-error">Disconnected</span>';
+        html += `<p style="margin-top: 1rem;"><strong>Ollama:</strong> ${ollamaStatus} (${data.ollama.host})</p>`;
+        
+        if (data.engines.ollama_models) {
+            html += `<p><strong>Models:</strong> ${data.engines.ollama_models.join(', ')}</p>`;
+        }
+        
+        statusDiv.innerHTML = html;
+        
+        // Update active engines count
+        const activeCount = Object.values(data.engines).filter(e => e.available === true).length;
+        document.getElementById('active-engines').textContent = activeCount;
+        
+    } catch (error) {
+        document.getElementById('system-status').innerHTML = 
+            '<div class="alert alert-error">Failed to load status: ' + error.message + '</div>';
+    }
+}
+
+// Load status on page load
+refreshStatus();
+
+// Auto-refresh every 30 seconds
+setInterval(refreshStatus, 30000);
+</script>
+{% endblock %}
+

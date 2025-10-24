@@ -1,20 +1,53 @@
 import io, os, re, threading
 from functools import lru_cache
-from typing import Tuple
+from typing import Tuple, Optional
 from fastapi import FastAPI, File, UploadFile, Query
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import PlainTextResponse, JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image, ImageOps
 import numpy as np
 import pytesseract
 import cv2
 import httpx
 
+# New OCR Pipeline
+from ocr_pipeline.router import OCRRouter
+from ocr_pipeline.postprocessor import OCRPostProcessor
+from config import settings
+
 # --- Surya (handwriting/messy) ---
 from surya.detection import DetectionPredictor
 from surya.recognition import RecognitionPredictor
 from surya.foundation import FoundationPredictor
 
-app = FastAPI()
+app = FastAPI(title="Universal OCR API", version="2.0.0")
+
+# Add CORS middleware for dashboard
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Configure appropriately for production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Initialize new OCR components
+ocr_router = None
+ocr_postprocessor = None
+
+def get_ocr_router():
+    """Lazy initialization of OCR router."""
+    global ocr_router
+    if ocr_router is None:
+        ocr_router = OCRRouter()
+    return ocr_router
+
+def get_postprocessor():
+    """Lazy initialization of post-processor."""
+    global ocr_postprocessor
+    if ocr_postprocessor is None:
+        ocr_postprocessor = OCRPostProcessor()
+    return ocr_postprocessor
 
 # ---------------- Surya lazy-singletons ----------------
 @lru_cache(maxsize=1)
@@ -255,4 +288,145 @@ async def ocr_text_md(
         model = md_model or DEFAULT_MD_MODEL
         md = await md_ollama(txt, model)
     return PlainTextResponse(md)
+
+# ============================================================================
+# NEW UNIVERSAL OCR ENDPOINT - Automatic document handling
+# ============================================================================
+
+@app.post("/ocr_universal")
+async def ocr_universal(
+    image: UploadFile = File(...),
+    format: str = Query("markdown", enum=["text", "markdown", "json"]),
+    force_engine: Optional[str] = Query(None, enum=["tesseract", "surya", "vision"]),
+    clean: bool = Query(True, description="Apply text cleaning"),
+    use_llm_formatter: bool = Query(True, description="Use LLM for markdown formatting"),
+    use_intelligent_pipeline: bool = Query(False, description="Use multi-pass intelligent pipeline (slower but better)")
+):
+    """
+    Universal OCR endpoint - automatically handles any document type.
+    
+    This endpoint:
+    1. Classifies the document type (printed, handwriting, mixed, table, etc.)
+    2. Routes to the best OCR engine(s)
+    3. Post-processes and formats the output beautifully
+    
+    No configuration needed - just upload your image!
+    
+    Args:
+        image: Image file to process
+        format: Output format (text, markdown, json)
+        force_engine: Force use of specific engine (optional)
+        clean: Apply text cleaning
+        use_llm_formatter: Use LLM for markdown formatting (slower but better)
+        use_intelligent_pipeline: Use 3-pass intelligent pipeline (analyzes, extracts, corrects with vision)
+    
+    Returns:
+        Formatted OCR result
+    """
+    try:
+        # Use intelligent pipeline if requested
+        if use_intelligent_pipeline:
+            from ocr_pipeline.intelligent_pipeline import IntelligentOCRPipeline
+            
+            image_bytes = await image.read()
+            pil_image = Image.open(io.BytesIO(image_bytes))
+            
+            pipeline = IntelligentOCRPipeline()
+            result = await pipeline.process(pil_image)
+            
+            if format == "json":
+                return JSONResponse({
+                    "text": result.text,
+                    "confidence": result.confidence,
+                    "engine": result.engine_name,
+                    "metadata": result.metadata
+                })
+            elif format == "markdown":
+                return PlainTextResponse(result.text)
+            else:  # text
+                return PlainTextResponse(result.text)
+        
+        # Original pipeline
+
+        # Read image
+        image_bytes = await image.read()
+        pil_image = Image.open(io.BytesIO(image_bytes))
+        
+        # Get router and processor
+        router = get_ocr_router()
+        processor = get_postprocessor()
+        
+        # Route and process
+        result = await router.route_and_process(pil_image, force_engine=force_engine)
+        
+        # Clean text if requested
+        text = result.text
+        if clean:
+            text = processor.clean_text(text, aggressive=False)
+        
+        # Format based on request
+        if format == "json":
+            return JSONResponse({
+                "text": text,
+                "confidence": result.confidence,
+                "engine": result.engine_name,
+                "metadata": result.metadata
+            })
+        elif format == "markdown":
+            # Format as markdown
+            markdown = await processor.format_as_markdown(text, use_llm=use_llm_formatter)
+            return PlainTextResponse(markdown)
+        else:  # text
+            return PlainTextResponse(text)
+    
+    except Exception as e:
+        return JSONResponse(
+            {"error": str(e), "details": "OCR processing failed"},
+            status_code=500
+        )
+
+@app.get("/ocr_status")
+async def ocr_status():
+    """Get status of OCR engines and system health."""
+    try:
+        router = get_ocr_router()
+        
+        # Check engine availability
+        engines_status = {}
+        for name, engine in router.available_engines.items():
+            engines_status[name] = {
+                "available": engine.is_available(),
+                "name": engine.name
+            }
+        
+        # Check Ollama connection
+        ollama_status = "unknown"
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                response = await client.get(f"{settings.ollama_host}/api/tags")
+                if response.status_code == 200:
+                    ollama_status = "connected"
+                    models = response.json().get("models", [])
+                    engines_status["ollama_models"] = [m.get("name") for m in models]
+        except Exception:
+            ollama_status = "disconnected"
+        
+        return JSONResponse({
+            "status": "healthy",
+            "engines": engines_status,
+            "ollama": {
+                "host": settings.ollama_host,
+                "status": ollama_status
+            },
+            "settings": {
+                "vision_model": settings.ollama_vision_model,
+                "text_model": settings.ollama_text_model,
+                "formatter_model": settings.ollama_formatter_model
+            }
+        })
+    except Exception as e:
+        return JSONResponse(
+            {"status": "error", "error": str(e)},
+            status_code=500
+        )
 

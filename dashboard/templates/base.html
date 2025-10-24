@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}OCR Dashboard{% endblock %}</title>
+    <link rel="stylesheet" href="/static/style.css">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <nav>
+        <div class="container">
+            <h1>🔍 Universal OCR</h1>
+            <ul>
+                <li><a href="/">Dashboard</a></li>
+                <li><a href="/config">Config</a></li>
+                <li><a href="/test">Test</a></li>
+                <li><a href="/agents">Agents</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+
+    <script>
+        // WebSocket connection for real-time updates
+        let ws;
+        function connectWebSocket() {
+            ws = new WebSocket(`ws://${window.location.host}/ws`);
+            
+            ws.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                handleWebSocketMessage(data);
+            };
+            
+            ws.onclose = function() {
+                // Reconnect after 5 seconds
+                setTimeout(connectWebSocket, 5000);
+            };
+        }
+        
+        function handleWebSocketMessage(data) {
+            // Override this in page-specific scripts
+            console.log('WebSocket message:', data);
+        }
+        
+        // Connect on page load
+        connectWebSocket();
+    </script>
+
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>
+

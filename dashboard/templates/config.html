@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}Configuration - Universal OCR{% endblock %}
+
+{% block content %}
+<h1>Configuration</h1>
+
+<div class="card">
+    <h2>Ollama Settings</h2>
+    <form id="config-form">
+        <div class="form-group">
+            <label>Ollama Host</label>
+            <input type="text" id="ollama_host" value="http://192.168.0.153:11434" readonly>
+            <small style="color: var(--text-secondary);">Remote Ollama server address</small>
+        </div>
+        
+        <div class="form-group">
+            <label>Vision Model</label>
+            <input type="text" id="ollama_vision_model" value="llava:13b">
+            <small style="color: var(--text-secondary);">Model for document classification and complex OCR</small>
+        </div>
+        
+        <div class="form-group">
+            <label>Text Model</label>
+            <input type="text" id="ollama_text_model" value="gemma2:12b">
+            <small style="color: var(--text-secondary);">Model for text generation tasks</small>
+        </div>
+        
+        <div class="form-group">
+            <label>Formatter Model</label>
+            <input type="text" id="ollama_formatter_model" value="gemma2:12b">
+            <small style="color: var(--text-secondary);">Model for markdown formatting</small>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <h2>Agent System Settings</h2>
+    <div class="form-group">
+        <label>
+            <input type="checkbox" id="enable_autonomous_agents" checked>
+            Enable Autonomous Agents
+        </label>
+        <small style="color: var(--text-secondary);">Allow AI agents to run improvement loops</small>
+    </div>
+    
+    <div class="form-group">
+        <label>
+            <input type="checkbox" id="require_approval" checked>
+            Require Approval for Changes
+        </label>
+        <small style="color: var(--text-secondary);">Agents must ask before making code changes</small>
+    </div>
+    
+    <div class="form-group">
+        <label>Max Concurrent Agent Tasks</label>
+        <input type="number" id="max_agent_tasks" value="2" min="1" max="10">
+        <small style="color: var(--text-secondary);">Limit to avoid overloading Ollama</small>
+    </div>
+</div>
+
+<div class="card">
+    <h2>OCR Engine Configuration</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Engine</th>
+                <th>Enabled</th>
+                <th>Confidence Threshold</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Tesseract</td>
+                <td><input type="checkbox" checked></td>
+                <td><input type="number" value="60" min="0" max="100" style="width: 80px;"></td>
+            </tr>
+            <tr>
+                <td>Surya</td>
+                <td><input type="checkbox" checked></td>
+                <td><input type="number" value="70" min="0" max="100" style="width: 80px;"></td>
+            </tr>
+            <tr>
+                <td>Vision (Ollama)</td>
+                <td><input type="checkbox" checked></td>
+                <td><input type="number" value="80" min="0" max="100" style="width: 80px;"></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <button class="btn btn-primary" onclick="saveConfig()">Save Configuration</button>
+    <button class="btn btn-secondary" onclick="loadConfig()">Reload</button>
+    <div id="save-status" style="margin-top: 1rem;"></div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+async function loadConfig() {
+    try {
+        const response = await fetch('/api/config');
+        const config = await response.json();
+        
+        document.getElementById('ollama_host').value = config.ollama_host;
+        document.getElementById('ollama_vision_model').value = config.ollama_vision_model;
+        document.getElementById('ollama_text_model').value = config.ollama_text_model;
+        document.getElementById('ollama_formatter_model').value = config.ollama_formatter_model;
+        document.getElementById('enable_autonomous_agents').checked = config.enable_autonomous_agents;
+        document.getElementById('require_approval').checked = config.require_approval_for_changes;
+        document.getElementById('max_agent_tasks').value = config.max_concurrent_agent_tasks;
+        
+        showStatus('Configuration loaded', 'success');
+    } catch (error) {
+        showStatus('Failed to load configuration: ' + error.message, 'error');
+    }
+}
+
+async function saveConfig() {
+    const config = {
+        ollama_host: document.getElementById('ollama_host').value,
+        ollama_vision_model: document.getElementById('ollama_vision_model').value,
+        ollama_text_model: document.getElementById('ollama_text_model').value,
+        ollama_formatter_model: document.getElementById('ollama_formatter_model').value,
+        enable_autonomous_agents: document.getElementById('enable_autonomous_agents').checked,
+        require_approval_for_changes: document.getElementById('require_approval').checked,
+        max_concurrent_agent_tasks: parseInt(document.getElementById('max_agent_tasks').value),
+    };
+    
+    try {
+        const response = await fetch('/api/config', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(config)
+        });
+        
+        if (response.ok) {
+            showStatus('Configuration saved successfully!', 'success');
+        } else {
+            showStatus('Failed to save configuration', 'error');
+        }
+    } catch (error) {
+        showStatus('Error: ' + error.message, 'error');
+    }
+}
+
+function showStatus(message, type) {
+    const statusDiv = document.getElementById('save-status');
+    statusDiv.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+    setTimeout(() => statusDiv.innerHTML = '', 5000);
+}
+
+// Load config on page load
+loadConfig();
+</script>
+{% endblock %}
+

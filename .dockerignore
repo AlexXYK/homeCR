@@ -1,42 +1,53 @@
-# Git
-.git
-.gitignore
-
-# Documentation
-README.md
-*.md
-
-# Python cache
-__pycache__/
+# Python
+__pycache__
 *.py[cod]
 *$py.class
 *.so
-.pytest_cache/
-
-# Virtual environments
+.Python
 venv/
 env/
 ENV/
+*.egg-info/
+dist/
+build/
+
+# Environment & Secrets
+.env
+.env.*
+*.key
+*.pem
 
 # IDE
 .vscode/
 .idea/
 *.swp
-*.swo
 
 # OS
 .DS_Store
 Thumbs.db
+desktop.ini
 
-# Development
-docker-compose.override.yml
-.env.local
-.env.development
+# Git
+.git/
+.gitignore
 
-# Logs
-*.log
+# Testing & Development
+dev_tools/
+*.json
+!data/test_datasets/**/*.json
 
-# Temporary files
+# Data & Logs
+data/*.db
+data/*.db-journal
+logs/*.log
 tmp/
-*.tmp
-*.temp
+
+# Documentation (don't need in container)
+docs/
+*.md
+!README.md
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore

@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block title %}Test OCR - Universal OCR{% endblock %}
+
+{% block content %}
+<h1>Test OCR</h1>
+
+<div class="card">
+    <h2>Upload & Test</h2>
+    
+    <div class="upload-area" id="upload-area">
+        <input type="file" id="file-input" accept="image/*" style="display: none;">
+        <p style="font-size: 3rem;">📄</p>
+        <p><strong>Click to upload</strong> or drag and drop</p>
+        <p style="color: var(--text-secondary); font-size: 0.875rem;">Supports JPG, PNG, PDF images</p>
+    </div>
+    
+    <div class="form-group" style="margin-top: 1.5rem;">
+        <label>Output Format</label>
+        <select id="format-select">
+            <option value="markdown">Markdown (formatted)</option>
+            <option value="text">Plain Text</option>
+            <option value="json">JSON (with metadata)</option>
+        </select>
+    </div>
+    
+    <div class="form-group">
+        <label>Force Engine (optional)</label>
+        <select id="engine-select">
+            <option value="">Auto (recommended)</option>
+            <option value="tesseract">Tesseract</option>
+            <option value="surya">Surya</option>
+            <option value="vision">Vision Model</option>
+        </select>
+    </div>
+    
+    <button class="btn btn-primary" onclick="processImage()" id="process-btn" disabled>
+        Process Image
+    </button>
+</div>
+
+<div class="card" id="result-card" style="display: none;">
+    <h2>Result</h2>
+    <div id="metadata-info" style="margin-bottom: 1rem;"></div>
+    <div id="result-content"></div>
+    <button class="btn btn-secondary" onclick="copyToClipboard()">Copy to Clipboard</button>
+    <button class="btn btn-success" onclick="saveToTestDataset()">Save to Test Dataset</button>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let selectedFile = null;
+let lastResult = null;
+
+const uploadArea = document.getElementById('upload-area');
+const fileInput = document.getElementById('file-input');
+
+uploadArea.addEventListener('click', () => fileInput.click());
+
+fileInput.addEventListener('change', (e) => {
+    if (e.target.files[0]) {
+        selectedFile = e.target.files[0];
+        updateUploadArea();
+    }
+});
+
+// Drag and drop
+uploadArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadArea.classList.add('drag-over');
+});
+
+uploadArea.addEventListener('dragleave', () => {
+    uploadArea.classList.remove('drag-over');
+});
+
+uploadArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadArea.classList.remove('drag-over');
+    if (e.dataTransfer.files[0]) {
+        selectedFile = e.dataTransfer.files[0];
+        fileInput.files = e.dataTransfer.files;
+        updateUploadArea();
+    }
+});
+
+function updateUploadArea() {
+    uploadArea.innerHTML = `
+        <p style="font-size: 3rem;">✅</p>
+        <p><strong>${selectedFile.name}</strong></p>
+        <p style="color: var(--text-secondary);">Click to change file</p>
+    `;
+    document.getElementById('process-btn').disabled = false;
+}
+
+async function processImage() {
+    if (!selectedFile) return;
+    
+    const btn = document.getElementById('process-btn');
+    btn.disabled = true;
+    btn.textContent = 'Processing...';
+    
+    const formData = new FormData();
+    formData.append('image', selectedFile);
+    
+    const format = document.getElementById('format-select').value;
+    const engine = document.getElementById('engine-select').value;
+    
+    let url = `http://localhost:5000/ocr_universal?format=${format}`;
+    if (engine) url += `&force_engine=${engine}`;
+    
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (!response.ok) {
+            throw new Error('OCR processing failed');
+        }
+        
+        if (format === 'json') {
+            lastResult = await response.json();
+            displayJsonResult(lastResult);
+        } else {
+            lastResult = await response.text();
+            displayTextResult(lastResult);
+        }
+        
+        document.getElementById('result-card').style.display = 'block';
+        
+    } catch (error) {
+        alert('Error: ' + error.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Process Image';
+    }
+}
+
+function displayJsonResult(data) {
+    document.getElementById('metadata-info').innerHTML = `
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+            <div>
+                <strong>Engine:</strong> 
+                <span class="status status-info">${data.engine}</span>
+            </div>
+            <div>
+                <strong>Confidence:</strong> 
+                ${(data.confidence * 100).toFixed(1)}%
+            </div>
+            <div>
+                <strong>Document Type:</strong> 
+                ${data.metadata.document_type || 'N/A'}
+            </div>
+        </div>
+    `;
+    document.getElementById('result-content').innerHTML = 
+        `<pre style="background: var(--bg); padding: 1rem; border-radius: 6px; overflow-x: auto;">${JSON.stringify(data, null, 2)}</pre>`;
+}
+
+function displayTextResult(text) {
+    document.getElementById('metadata-info').innerHTML = '';
+    document.getElementById('result-content').innerHTML = 
+        `<pre style="background: var(--bg); padding: 1rem; border-radius: 6px; white-space: pre-wrap; word-wrap: break-word;">${text}</pre>`;
+}
+
+function copyToClipboard() {
+    const text = typeof lastResult === 'string' ? lastResult : JSON.stringify(lastResult, null, 2);
+    navigator.clipboard.writeText(text).then(() => {
+        alert('Copied to clipboard!');
+    });
+}
+
+function saveToTestDataset() {
+    alert('Test dataset saving not yet implemented - coming soon!');
+}
+</script>
+{% endblock %}
+

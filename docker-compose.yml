@@ -1,50 +1,89 @@
- version: '3.8'
+version: '3.8'
 
 services:
-  surya-ocr:
-    image: alexxyk/surya-ocr:latest
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.production
     container_name: surya-ocr-api
     ports:
-      - "5000:5000"
+      - "${API_PORT:-5000}:5000"
     environment:
-      - API_PORT=5000
-      - PYTHONUNBUFFERED=1
-      - OLLAMA_HOST=http://192.168.0.153:11434
-      - DEFAULT_MD_MODEL=gemma3:27b
+      # Ollama
+      - OLLAMA_HOST=${OLLAMA_HOST:-http://host.docker.internal:11434}
+      - OLLAMA_VISION_MODEL=${OLLAMA_VISION_MODEL:-qwen2.5vl:7b}
+      - OLLAMA_TEXT_MODEL=${OLLAMA_TEXT_MODEL:-gemma3:12b-it-qat}
+      
+      # Vision Provider
+      - VISION_PROVIDER=${VISION_PROVIDER:-ollama}
+      
+      # API Keys
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      
+      # Models
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.0-flash-exp}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4-vision-preview}
+      - ANTHROPIC_MODEL=${ANTHROPIC_MODEL:-claude-3-5-sonnet-20241022}
+      
+      # OCR Behavior
+      - USE_HYBRID_OCR=${USE_HYBRID_OCR:-true}
+      - PERFECT_TABLES=${PERFECT_TABLES:-false}
+      
+      # Logging
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    
     volumes:
-      # Mount for temporary OCR files and processing
-      - ./tmp:/tmp/ocr
-      # Optional: mount for input/output files
       - ./data:/app/data
+      - ./logs:/app/logs
+    
     restart: unless-stopped
+    
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/healthz"]
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
+    
     networks:
       - ocr-network
 
-  # Optional: Add a simple web UI for testing (uncomment if needed)
-  # ocr-web-ui:
-  #   image: nginx:alpine
-  #   container_name: surya-ocr-web
-  #   ports:
-  #     - "8080:80"
-  #   volumes:
-  #     - ./web:/usr/share/nginx/html:ro
-  #   depends_on:
-  #     - surya-ocr
-  #   restart: unless-stopped
-  #   networks:
-  #     - ocr-network
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.production
+    container_name: surya-ocr-dashboard
+    command: ["python", "run_dashboard.py"]
+    ports:
+      - "${DASHBOARD_PORT:-8080}:8080"
+    environment:
+      # Same config as API
+      - OLLAMA_HOST=${OLLAMA_HOST:-http://host.docker.internal:11434}
+      - VISION_PROVIDER=${VISION_PROVIDER:-ollama}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - USE_HYBRID_OCR=${USE_HYBRID_OCR:-true}
+      - PERFECT_TABLES=${PERFECT_TABLES:-false}
+    
+    volumes:
+      - ./data:/app/data
+    
+    restart: unless-stopped
+    
+    depends_on:
+      - api
+    
+    networks:
+      - ocr-network
 
 networks:
   ocr-network:
     driver: bridge
 
 volumes:
-  ocr-data:
+  data:
     driver: local
-
+  logs:
+    driver: local
