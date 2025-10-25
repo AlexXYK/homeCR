@@ -65,7 +65,6 @@ async def get_config():
         "ollama_host": settings.ollama_host,
         "ollama_vision_model": settings.ollama_vision_model,
         "ollama_text_model": settings.ollama_text_model,
-        "ollama_formatter_model": settings.ollama_formatter_model,
         "enable_autonomous_agents": settings.enable_autonomous_agents,
         "require_approval_for_changes": settings.require_approval_for_changes,
         "max_concurrent_agent_tasks": settings.max_concurrent_agent_tasks,

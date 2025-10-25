@@ -29,9 +29,8 @@ class Settings(BaseSettings):
     
     # Ollama-specific (only if vision_provider=ollama)
     ollama_host: str = "http://localhost:11434"
-    ollama_vision_model: str = "qwen2.5vl:7b"  # Vision model for classification and OCR
-    ollama_text_model: str = "gemma3:12b-it-q8_0"  # Text model for analysis
-    ollama_formatter_model: str = "gemma3:12b-it-q8_0"  # Model for markdown formatting
+    ollama_vision_model: str = "qwen2.5vl:7b"  # Vision model for image analysis/classification/OCR
+    ollama_text_model: str = "gemma3:12b-it-q8_0"  # Text model for formatting, analysis, all text tasks
     
     # Default OCR Settings
     use_hybrid_ocr: bool = True  # Run both Tesseract + Surya in parallel

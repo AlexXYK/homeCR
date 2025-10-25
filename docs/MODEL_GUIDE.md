@@ -210,9 +210,8 @@ Edit `.env` to change models:
 # Vision model (must support images!)
 OLLAMA_VISION_MODEL=llava:13b
 
-# Text model (for formatting)
+# Text model (for formatting, analysis, all text tasks)
 OLLAMA_TEXT_MODEL=gemma3:12b-it-qat
-OLLAMA_FORMATTER_MODEL=gemma3:12b-it-qat
 
 # Performance tuning
 OLLAMA_MAX_PARALLEL_REQUESTS=2  # Match your GPU count

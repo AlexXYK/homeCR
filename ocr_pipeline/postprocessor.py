@@ -9,7 +9,7 @@ class OCRPostProcessor:
     
     def __init__(self):
         self.ollama_host = settings.ollama_host
-        self.formatter_model = settings.ollama_formatter_model
+        self.text_model = settings.ollama_text_model
     
     async def format_as_markdown(self, text: str, use_llm: bool = True) -> str:
         """
@@ -66,7 +66,7 @@ Raw OCR text:
 Output ONLY the formatted markdown, no commentary:"""
         
         payload = {
-            "model": self.formatter_model,
+            "model": self.text_model,
             "prompt": prompt,
             "stream": False,
             "options": {
