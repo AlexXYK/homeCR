@@ -19,18 +19,21 @@ class Settings(BaseSettings):
     # === Vision Provider Configuration ===
     # Provider: ollama (local), gemini (Google), openai (GPT-4), anthropic (Claude), openrouter
     vision_provider: str = "ollama"
-    vision_model: str = "qwen2.5vl:7b"  # Model to use for the selected provider
+    vision_model: str = "qwen2.5vl:7b"  # Model to use for the selected vision provider
     
-    # Provider API Keys (only needed for cloud providers)
+    # === Text Provider Configuration ===
+    # Provider for text processing (formatting, analysis, etc.)
+    text_provider: str = "ollama"
+    text_model: str = "gemma3:12b-it-q8_0"  # Model to use for the selected text provider
+    
+    # === Provider API Keys (only needed for cloud providers) ===
     gemini_api_key: Optional[str] = None
     openai_api_key: Optional[str] = None
     anthropic_api_key: Optional[str] = None
     openrouter_api_key: Optional[str] = None
     
-    # Ollama-specific (only if vision_provider=ollama)
+    # === Ollama-specific (only if provider=ollama) ===
     ollama_host: str = "http://localhost:11434"
-    ollama_vision_model: str = "qwen2.5vl:7b"  # Vision model for image analysis/classification/OCR
-    ollama_text_model: str = "gemma3:12b-it-q8_0"  # Text model for formatting, analysis, all text tasks
     
     # Default OCR Settings
     use_hybrid_ocr: bool = True  # Run both Tesseract + Surya in parallel

@@ -11,7 +11,11 @@ services:
       - VISION_PROVIDER=ollama
       - VISION_MODEL=qwen2.5vl:7b
       
-      # === Ollama (only if VISION_PROVIDER=ollama) ===
+      # === Text Configuration ===
+      - TEXT_PROVIDER=ollama
+      - TEXT_MODEL=gemma3:12b-it-q8_0
+      
+      # === Ollama Settings (only if provider=ollama) ===
       - OLLAMA_HOST=http://192.168.0.153:11434
       
       # === API Keys (only add the one you're using) ===

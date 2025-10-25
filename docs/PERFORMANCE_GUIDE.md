@@ -196,8 +196,11 @@ Edit `portainer-stack.yml` or set environment variables:
 
 ```yaml
 environment:
-  - OLLAMA_VISION_MODEL=qwen2.5vl:7b     # For image analysis/classification
-  - OLLAMA_TEXT_MODEL=gemma3:12b         # For all text tasks (formatting, analysis)
+  - VISION_PROVIDER=ollama
+  - VISION_MODEL=qwen2.5vl:7b             # For image analysis/classification
+  - TEXT_PROVIDER=ollama
+  - TEXT_MODEL=gemma3:12b                 # For all text tasks (formatting, analysis)
+  - OLLAMA_HOST=http://YOUR_OLLAMA_HOST:11434
 ```
 
 **Faster models:**

@@ -9,21 +9,40 @@
     <h2>Ollama Settings</h2>
     <form id="config-form">
         <div class="form-group">
-            <label>Ollama Host</label>
-            <input type="text" id="ollama_host" value="http://192.168.0.153:11434" readonly>
-            <small style="color: var(--text-secondary);">Remote Ollama server address</small>
+            <label>Vision Provider</label>
+            <select id="vision_provider">
+                <option value="ollama">Ollama (Local)</option>
+                <option value="gemini">Google Gemini</option>
+                <option value="openai">OpenAI GPT-4</option>
+                <option value="anthropic">Anthropic Claude</option>
+            </select>
         </div>
         
         <div class="form-group">
             <label>Vision Model</label>
-            <input type="text" id="ollama_vision_model" value="llava:13b">
-            <small style="color: var(--text-secondary);">Model for document classification and complex OCR</small>
+            <input type="text" id="vision_model" value="qwen2.5vl:7b">
+            <small style="color: var(--text-secondary);">Model for image analysis/classification</small>
+        </div>
+        
+        <div class="form-group">
+            <label>Text Provider</label>
+            <select id="text_provider">
+                <option value="ollama">Ollama (Local)</option>
+                <option value="openai">OpenAI</option>
+                <option value="anthropic">Anthropic</option>
+            </select>
         </div>
         
         <div class="form-group">
             <label>Text Model</label>
-            <input type="text" id="ollama_text_model" value="gemma2:12b">
-            <small style="color: var(--text-secondary);">Model for all text tasks (formatting, analysis, generation)</small>
+            <input type="text" id="text_model" value="gemma3:12b-it-q8_0">
+            <small style="color: var(--text-secondary);">Model for formatting, analysis, all text tasks</small>
+        </div>
+        
+        <div class="form-group">
+            <label>Ollama Host</label>
+            <input type="text" id="ollama_host" value="http://localhost:11434">
+            <small style="color: var(--text-secondary);">Only used if provider is Ollama</small>
         </div>
     </form>
 </div>
@@ -97,9 +116,11 @@ async function loadConfig() {
         const response = await fetch('/api/config');
         const config = await response.json();
         
+        document.getElementById('vision_provider').value = config.vision_provider;
+        document.getElementById('vision_model').value = config.vision_model;
+        document.getElementById('text_provider').value = config.text_provider;
+        document.getElementById('text_model').value = config.text_model;
         document.getElementById('ollama_host').value = config.ollama_host;
-        document.getElementById('ollama_vision_model').value = config.ollama_vision_model;
-        document.getElementById('ollama_text_model').value = config.ollama_text_model;
         document.getElementById('enable_autonomous_agents').checked = config.enable_autonomous_agents;
         document.getElementById('require_approval').checked = config.require_approval_for_changes;
         document.getElementById('max_agent_tasks').value = config.max_concurrent_agent_tasks;
@@ -112,9 +133,11 @@ async function loadConfig() {
 
 async function saveConfig() {
     const config = {
+        vision_provider: document.getElementById('vision_provider').value,
+        vision_model: document.getElementById('vision_model').value,
+        text_provider: document.getElementById('text_provider').value,
+        text_model: document.getElementById('text_model').value,
         ollama_host: document.getElementById('ollama_host').value,
-        ollama_vision_model: document.getElementById('ollama_vision_model').value,
-        ollama_text_model: document.getElementById('ollama_text_model').value,
         enable_autonomous_agents: document.getElementById('enable_autonomous_agents').checked,
         require_approval_for_changes: document.getElementById('require_approval').checked,
         max_concurrent_agent_tasks: parseInt(document.getElementById('max_agent_tasks').value),

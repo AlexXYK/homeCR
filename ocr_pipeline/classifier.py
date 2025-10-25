@@ -22,8 +22,9 @@ class DocumentClassifier:
     """Classifies document type for optimal OCR routing."""
     
     def __init__(self):
+        self.vision_provider = settings.vision_provider
+        self.vision_model = settings.vision_model
         self.ollama_host = settings.ollama_host
-        self.vision_model = settings.ollama_vision_model
     
     async def classify(self, image: Image.Image) -> DocumentType:
         """

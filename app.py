@@ -425,8 +425,10 @@ async def ocr_status():
                 "status": ollama_status
             },
             "settings": {
-                "vision_model": settings.ollama_vision_model,
-                "text_model": settings.ollama_text_model
+                "vision_provider": settings.vision_provider,
+                "vision_model": settings.vision_model,
+                "text_provider": settings.text_provider,
+                "text_model": settings.text_model
             }
         })
     except Exception as e:

@@ -62,9 +62,11 @@ async def agents_page(request: Request):
 async def get_config():
     """Get current configuration."""
     return JSONResponse({
+        "vision_provider": settings.vision_provider,
+        "vision_model": settings.vision_model,
+        "text_provider": settings.text_provider,
+        "text_model": settings.text_model,
         "ollama_host": settings.ollama_host,
-        "ollama_vision_model": settings.ollama_vision_model,
-        "ollama_text_model": settings.ollama_text_model,
         "enable_autonomous_agents": settings.enable_autonomous_agents,
         "require_approval_for_changes": settings.require_approval_for_changes,
         "max_concurrent_agent_tasks": settings.max_concurrent_agent_tasks,

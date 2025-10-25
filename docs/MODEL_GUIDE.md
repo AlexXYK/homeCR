@@ -207,11 +207,16 @@ curl http://192.168.0.153:11434/api/tags
 Edit `.env` to change models:
 
 ```bash
-# Vision model (must support images!)
-OLLAMA_VISION_MODEL=llava:13b
+# Vision Configuration
+VISION_PROVIDER=ollama
+VISION_MODEL=qwen2.5vl:7b               # Must support images!
 
-# Text model (for formatting, analysis, all text tasks)
-OLLAMA_TEXT_MODEL=gemma3:12b-it-qat
+# Text Configuration  
+TEXT_PROVIDER=ollama
+TEXT_MODEL=gemma3:12b-it-qat            # For formatting, analysis, all text tasks
+
+# Ollama (only if provider=ollama)
+OLLAMA_HOST=http://localhost:11434
 
 # Performance tuning
 OLLAMA_MAX_PARALLEL_REQUESTS=2  # Match your GPU count

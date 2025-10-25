@@ -8,8 +8,9 @@ class OCRPostProcessor:
     """Post-processes OCR results for better output quality."""
     
     def __init__(self):
+        self.text_provider = settings.text_provider
+        self.text_model = settings.text_model
         self.ollama_host = settings.ollama_host
-        self.text_model = settings.ollama_text_model
     
     async def format_as_markdown(self, text: str, use_llm: bool = True) -> str:
         """
