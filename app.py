@@ -1,5 +1,6 @@
 import io, os, re, threading
 from functools import lru_cache
+from pathlib import Path
 from typing import Tuple, Optional
 from fastapi import FastAPI, File, UploadFile, Query, Request
 from fastapi.responses import PlainTextResponse, JSONResponse, HTMLResponse
@@ -233,6 +234,11 @@ async def md_ollama(text: str, model: str) -> str:
 def healthz():
     return {"ok": True, "ollama": OLLAMA_HOST, "default_md_model": DEFAULT_MD_MODEL}
 
+@app.get("/health")
+def health():
+    """Health check endpoint for Docker/Kubernetes."""
+    return {"status": "healthy", "ok": True}
+
 @app.post("/ocr_text")
 async def ocr_text(
     image: UploadFile = File(...),
@@ -441,7 +447,6 @@ from fastapi.templating import Jinja2Templates
 # Setup dashboard templates and static files
 dashboard_dir = Path(__file__).parent / "dashboard"
 if dashboard_dir.exists():
-    from pathlib import Path
     templates = Jinja2Templates(directory=str(dashboard_dir / "templates"))
     app.mount("/static", StaticFiles(directory=str(dashboard_dir / "static")), name="static")
 
