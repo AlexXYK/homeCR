@@ -5,7 +5,7 @@ services:
     image: alexxyk/surya-ocr:latest
     container_name: surya-ocr
     ports:
-      - "5000:5000"  # API + Dashboard (all in one!)
+      - "5005:5000"  # External:Internal - API + Dashboard (all in one!)
     environment:
       # === Vision Configuration ===
       - VISION_PROVIDER=ollama
@@ -18,7 +18,7 @@ services:
       # === Ollama Settings (only if provider=ollama) ===
       - OLLAMA_HOST=http://192.168.0.153:11434
       
-      # === API Keys (only add the one you're using) ===
+      # === API Keys (only if using cloud providers) ===
       - GEMINI_API_KEY=
       # - OPENAI_API_KEY=
       # - ANTHROPIC_API_KEY=
