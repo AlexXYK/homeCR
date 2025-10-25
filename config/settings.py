@@ -28,7 +28,10 @@ class Settings(BaseSettings):
     openrouter_api_key: Optional[str] = None
     
     # Ollama-specific (only if vision_provider=ollama)
-    ollama_host: str = "http://192.168.0.153:11434"
+    ollama_host: str = "http://localhost:11434"
+    ollama_vision_model: str = "qwen2.5vl:7b"  # Vision model for classification and OCR
+    ollama_text_model: str = "gemma3:12b-it-q8_0"  # Text model for analysis
+    ollama_formatter_model: str = "gemma3:12b-it-q8_0"  # Model for markdown formatting
     
     # Default OCR Settings
     use_hybrid_ocr: bool = True  # Run both Tesseract + Surya in parallel
