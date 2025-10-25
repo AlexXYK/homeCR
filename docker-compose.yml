@@ -9,24 +9,21 @@ services:
     ports:
       - "${API_PORT:-5000}:5000"
     environment:
-      # Ollama
-      - OLLAMA_HOST=${OLLAMA_HOST:-http://host.docker.internal:11434}
-      - OLLAMA_VISION_MODEL=${OLLAMA_VISION_MODEL:-qwen2.5vl:7b}
-      - OLLAMA_TEXT_MODEL=${OLLAMA_TEXT_MODEL:-gemma3:12b-it-qat}
-      
-      # Vision Provider
+      # Vision Configuration
       - VISION_PROVIDER=${VISION_PROVIDER:-ollama}
+      - VISION_MODEL=${VISION_MODEL:-qwen2.5vl:7b}
       
-      # API Keys
+      # Text Configuration
+      - TEXT_PROVIDER=${TEXT_PROVIDER:-ollama}
+      - TEXT_MODEL=${TEXT_MODEL:-gemma3:12b-it-q8_0}
+      
+      # Ollama Settings (only if provider=ollama)
+      - OLLAMA_HOST=${OLLAMA_HOST:-http://host.docker.internal:11434}
+      
+      # API Keys (only if using cloud providers)
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
-      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
-      
-      # Models
-      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.0-flash-exp}
-      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4-vision-preview}
-      - ANTHROPIC_MODEL=${ANTHROPIC_MODEL:-claude-3-5-sonnet-20241022}
       
       # OCR Behavior
       - USE_HYBRID_OCR=${USE_HYBRID_OCR:-true}
@@ -61,8 +58,11 @@ services:
       - "${DASHBOARD_PORT:-8080}:8080"
     environment:
       # Same config as API
-      - OLLAMA_HOST=${OLLAMA_HOST:-http://host.docker.internal:11434}
       - VISION_PROVIDER=${VISION_PROVIDER:-ollama}
+      - VISION_MODEL=${VISION_MODEL:-qwen2.5vl:7b}
+      - TEXT_PROVIDER=${TEXT_PROVIDER:-ollama}
+      - TEXT_MODEL=${TEXT_MODEL:-gemma3:12b-it-q8_0}
+      - OLLAMA_HOST=${OLLAMA_HOST:-http://host.docker.internal:11434}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
       - USE_HYBRID_OCR=${USE_HYBRID_OCR:-true}
       - PERFECT_TABLES=${PERFECT_TABLES:-false}

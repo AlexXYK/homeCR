@@ -33,26 +33,30 @@ pip install -r requirements.txt
 
 ### 2. Configure
 
-Create `.env` file:
+Create `.env` file (or copy from `env.example`):
 
 ```bash
-# === OLLAMA (Local Models) ===
-OLLAMA_HOST=http://192.168.0.153:11434
-OLLAMA_VISION_MODEL=qwen2.5vl:7b
+# === Vision Configuration ===
+VISION_PROVIDER=ollama              # Options: ollama, gemini, openai, anthropic
+VISION_MODEL=qwen2.5vl:7b           # Model for image analysis
 
-# === VISION PROVIDER ===
-VISION_PROVIDER=ollama  # Options: ollama, gemini, openai, anthropic, openrouter
+# === Text Configuration ===
+TEXT_PROVIDER=ollama                # Options: ollama, openai, anthropic
+TEXT_MODEL=gemma3:12b-it-q8_0       # Model for formatting/analysis
 
-# === API KEYS (only if using cloud providers) ===
-GEMINI_API_KEY=your_key_here
-# OPENAI_API_KEY=your_key_here
-# ANTHROPIC_API_KEY=your_key_here
+# === Ollama Settings (only if provider=ollama) ===
+OLLAMA_HOST=http://localhost:11434
 
-# === OCR BEHAVIOR ===
-USE_HYBRID_OCR=true       # Run both Tesseract + Surya
-PERFECT_TABLES=false       # Use cloud AI only for tables
+# === API Keys (only if using cloud providers) ===
+GEMINI_API_KEY=
+OPENAI_API_KEY=
+ANTHROPIC_API_KEY=
 
-# === PORTS ===
+# === OCR Settings ===
+USE_HYBRID_OCR=true                 # Run both Tesseract + Surya
+PERFECT_TABLES=false                # Use cloud AI for tables
+
+# === Ports ===
 API_PORT=5000
 DASHBOARD_PORT=8080
 ```
@@ -217,39 +221,148 @@ See `PRODUCTION_DEPLOYMENT.md` for complete guide.
 
 ## 📡 API Reference
 
-### POST /ocr_universal
+### Quick Reference
+
+| Endpoint | Speed | Use Case | Example |
+|----------|-------|----------|---------|
+| `/ocr_text` | **Fast (2-5s)** | Simple text extraction | Screenshots, clean documents |
+| `/ocr_universal` | Medium (5-15s) | Automatic routing | General documents |
+| `/ocr_universal` (smart) | Slow (60-120s) | Best quality | Important documents |
+
+### POST /ocr_text (Simple & Fast)
+
+Fast text extraction - no classification, no LLM formatting.
+
+**Parameters (Query String):**
+- `engine`: `auto`, `tesseract`, `surya` (default: `auto`)
+- `clean`: `0`, `1`, `2` (default: `1`) - Text cleaning level
+- `handwriting`: `0`, `1` (default: `0`) - Optimize for handwriting
+
+**Examples:**
+
+```bash
+# Fast screenshot OCR (2-5 seconds)
+curl -X POST "http://localhost:5000/ocr_text?engine=tesseract&clean=1" \
+  -F "image=@screenshot.png"
+
+# Handwriting recognition
+curl -X POST "http://localhost:5000/ocr_text?engine=surya&handwriting=1" \
+  -F "image=@notes.jpg"
+```
+
+**Response:** Plain text
+
+---
+
+### POST /ocr_universal (Recommended)
 
 Universal OCR endpoint - automatically handles any document type.
 
-**Parameters:**
-- `image` (file): Image to process
-- `format` (string): Output format (text/markdown/json)
-- `perfect_tables` (bool): Use cloud AI for perfect table formatting
-- `vision_provider` (string): Override provider (ollama/gemini/openai/anthropic)
+**Parameters (Query String):**
+- `format`: `text`, `markdown`, `json` (default: `markdown`)
+- `force_engine`: `tesseract`, `surya`, `vision` (optional)
+- `clean`: `true`, `false` (default: `true`)
+- `use_llm_formatter`: `true`, `false` (default: `true`)
+- `use_intelligent_pipeline`: `true`, `false` (default: `false`)
 
-**Example:**
-
+**Fast Mode (5-15 seconds):**
 ```bash
-curl -X POST http://localhost:5000/ocr_universal \
-  -F "image=@invoice.pdf" \
-  -F "format=markdown" \
-  -F "perfect_tables=true"
+curl -X POST "http://localhost:5000/ocr_universal?format=text&use_llm_formatter=false&force_engine=tesseract" \
+  -F "image=@document.jpg"
 ```
 
-**Response:**
+**Balanced Mode (15-30 seconds):**
+```bash
+curl -X POST "http://localhost:5000/ocr_universal?format=markdown&use_llm_formatter=false" \
+  -F "image=@document.jpg"
+```
+
+**Best Quality (60-120 seconds):**
+```bash
+curl -X POST "http://localhost:5000/ocr_universal?format=markdown&use_llm_formatter=true" \
+  -F "image=@invoice.pdf"
+```
+
+**Maximum Quality (90-180 seconds):**
+```bash
+curl -X POST "http://localhost:5000/ocr_universal?use_intelligent_pipeline=true" \
+  -F "image=@complex_document.jpg"
+```
+
+**JSON Response Example:**
 
 ```json
 {
   "text": "# Invoice\n\n| Item | Price |\n|------|-------|\n| ... ",
   "confidence": 0.98,
-  "engine": "intelligent_pipeline(tesseract+surya+gemini_fusion)",
+  "engine": "intelligent_pipeline(tesseract+surya+vision_fusion)",
   "metadata": {
     "pipeline": "intelligent_hybrid",
-    "analysis": {...},
-    "ocr_engines": "tesseract+surya"
+    "document_type": "printed_text",
+    "engines_tried": ["tesseract", "vision"]
   }
 }
 ```
+
+---
+
+### GET /health
+
+Health check endpoint (for Docker/Kubernetes).
+
+```bash
+curl http://localhost:5000/health
+# Response: {"status": "healthy", "ok": true}
+```
+
+---
+
+### GET /ocr_status
+
+Get OCR engine status and configuration.
+
+```bash
+curl http://localhost:5000/ocr_status
+```
+
+**Response:**
+```json
+{
+  "status": "healthy",
+  "engines": {
+    "tesseract": {"available": true, "name": "tesseract"},
+    "surya": {"available": true, "name": "surya"},
+    "vision": {"available": true, "name": "vision_local"}
+  },
+  "ollama": {
+    "host": "http://localhost:11434",
+    "status": "connected"
+  },
+  "settings": {
+    "vision_provider": "ollama",
+    "vision_model": "qwen2.5vl:7b",
+    "text_provider": "ollama",
+    "text_model": "gemma3:12b-it-q8_0"
+  }
+}
+```
+
+---
+
+### Mobile/Tasker Integration
+
+For mobile apps or automation tools, use the **fast mode**:
+
+```bash
+# Tasker HTTP POST configuration:
+# URL: http://YOUR_SERVER:5000/ocr_text?engine=tesseract&clean=1
+# Method: POST
+# Content-Type: multipart/form-data
+# Body: image=<your_image_variable>
+# Response time: 2-5 seconds
+```
+
+See `docs/PERFORMANCE_GUIDE.md` for optimization details.
 
 ---
 
@@ -257,37 +370,38 @@ curl -X POST http://localhost:5000/ocr_universal \
 
 ### Environment Variables
 
-**Required:**
+**Vision & Text Providers:**
 ```bash
-OLLAMA_HOST=http://localhost:11434  # If using Ollama
+# Vision Configuration
+VISION_PROVIDER=ollama               # ollama, gemini, openai, anthropic
+VISION_MODEL=qwen2.5vl:7b            # Model for that provider
+
+# Text Configuration
+TEXT_PROVIDER=ollama                 # ollama, openai, anthropic
+TEXT_MODEL=gemma3:12b-it-q8_0        # Model for that provider
 ```
 
-**Optional:**
+**Provider Settings:**
 ```bash
-# Vision Provider Selection
-VISION_PROVIDER=ollama  # Default: ollama
+# Ollama (only if using ollama)
+OLLAMA_HOST=http://localhost:11434
 
-# API Keys (only add if using that provider)
+# API Keys (only if using that provider)
 GEMINI_API_KEY=your_key
 OPENAI_API_KEY=your_key
 ANTHROPIC_API_KEY=your_key
-OPENROUTER_API_KEY=your_key
+```
 
-# Model Selection per Provider
-OLLAMA_VISION_MODEL=qwen2.5vl:7b
-GEMINI_MODEL=gemini-2.0-flash-exp
-OPENAI_MODEL=gpt-4-vision-preview
-ANTHROPIC_MODEL=claude-3-5-sonnet-20241022
+**OCR Behavior:**
+```bash
+USE_HYBRID_OCR=true                  # Run both Tesseract + Surya in parallel
+PERFECT_TABLES=false                 # Use cloud AI only for tables
+```
 
-# OCR Behavior
-USE_HYBRID_OCR=true     # Default: true (run both engines)
-PERFECT_TABLES=false     # Default: false (local only)
-
-# Ports
+**Application:**
+```bash
 API_PORT=5000
 DASHBOARD_PORT=8080
-
-# Logging
 LOG_LEVEL=INFO
 ```
 
